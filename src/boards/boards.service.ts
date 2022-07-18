@@ -5,6 +5,7 @@ import { createBoardDto } from './dto/create-board.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BoardEntity } from './board.entity';
 import { Repository } from 'typeorm';
+import { UserEntity } from 'src/auth/auth.entity';
 
 // @Injectable 데코레이터를 사용해서 어디에서든 해당 service를 접근가능하도록 설정
 // service는 데이터의 유효성을 체크하거나 db를 컨트롤하는 기능을 구현
@@ -15,8 +16,9 @@ export class BoardsService {
     private boardRepository: Repository<BoardEntity>,
   ) {}
 
-  async getAllBoards(): Promise<BoardEntity[]> {
-    return await this.boardRepository.find();
+  async getAllBoards(user: UserEntity): Promise<BoardEntity[]> {
+    //@ts-ignore
+    return await this.boardRepository.find({ where: { user } });
   }
 
   async getBoardById(id: Number): Promise<BoardEntity> {
@@ -29,13 +31,16 @@ export class BoardsService {
     return board;
   }
 
-  async createBoard(createBoardDto: createBoardDto): Promise<BoardEntity> {
+  async createBoard(
+    createBoardDto: createBoardDto,
+    user: UserEntity,
+  ): Promise<BoardEntity> {
     const { title, description } = createBoardDto;
-
     const board = this.boardRepository.create({
       title,
       description,
       status: BoardStatus.PUBLIC,
+      user,
     });
     await this.boardRepository.save(board);
     return board;
